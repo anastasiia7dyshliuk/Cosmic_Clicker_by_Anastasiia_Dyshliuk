@@ -8,7 +8,50 @@
 </head>
 <body>
 
-    <!-- СТАРТОВИЙ ЕКРАН -->
+    <!-- ==================== -->
+    <!-- ГОЛОВНА СТОРІНКА -->
+    <!-- ==================== -->
+    <div id="landing-page">
+        <div class="landing-content">
+            <h1>🌌 Cosmic Clicker 🌌</h1>
+            <p class="landing-description">
+                A fast-paced, space-themed arcade game. Catch falling stars,
+                set new high scores, and compete on the leaderboard!
+            </p>
+            <p class="landing-author">Created by <strong>Anastasiia Dyshliuk</strong></p>
+
+            <div class="landing-features">
+                <div class="feature-card">
+                    <span class="feature-icon">⭐</span>
+                    <p>Catch yellow stars for +1 point</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">💎</span>
+                    <p>Rare cyan stars give +2 points</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🏆</span>
+                    <p>Compete on the leaderboard</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">👾</span>
+                    <p>Choose your space avatar</p>
+                </div>
+            </div>
+
+            <button class="btn-play" onclick="showStartScreen()">🚀 Play Game</button>
+
+            <div class="landing-links">
+                <a href="https://github.com/anastasiia7dyshliuk/Cosmic_Clicker_by_Anastasiia_Dyshliuk" target="_blank">
+                    📂 View on GitHub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- ВІКНО 1: СТАРТОВИЙ ЕКРАН -->
+    <!-- ==================== -->
     <div id="start-screen">
         <h1>Welcome to Cosmic Clicker! 🌌</h1>
 
@@ -24,10 +67,13 @@
 
         <div class="buttons-row">
             <button class="btn-confirm" onclick="confirmNickname()">Confirm</button>
+            <button class="btn-back" onclick="showLanding()">← Back</button>
         </div>
     </div>
 
-    <!-- ІГРОВИЙ ЕКРАН -->
+    <!-- ==================== -->
+    <!-- ВІКНО 2: ІГРОВИЙ ЕКРАН -->
+    <!-- ==================== -->
     <div id="game-screen">
         <canvas id="game-canvas"></canvas>
 
@@ -41,6 +87,7 @@
             <div class="score" id="score-label">Score: 0</div>
             <div class="game-buttons">
                 <button class="btn-game btn-start" id="action-btn" onclick="startGame()">Start</button>
+                <button class="btn-game btn-game-exit" onclick="showLanding()">Menu</button>
             </div>
         </div>
 
@@ -53,7 +100,27 @@
         <div id="record-alarm">🚨 NEW RECORD! 🚨</div>
     </div>
 
+    <!-- ==================== -->
+    <!-- JAVASCRIPT -->
+    <!-- ==================== -->
     <script>
+        // -------------------
+        // Навігація між екранами
+        // -------------------
+        function showLanding() {
+            document.getElementById("landing-page").style.display = "flex";
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("game-screen").style.display = "none";
+            gameRunning = false;
+            stars = [];
+        }
+
+        function showStartScreen() {
+            document.getElementById("landing-page").style.display = "none";
+            document.getElementById("start-screen").style.display = "flex";
+            document.getElementById("game-screen").style.display = "none";
+        }
+
         // -------------------
         // Змінні
         // -------------------
@@ -136,7 +203,6 @@
             playerName = input;
             playerAvatar = selectedAvatar;
 
-            // Завантажуємо або створюємо профіль
             const db = loadDB();
             if (db[playerName]) {
                 highScore = db[playerName].high_score || 0;
@@ -147,7 +213,6 @@
             }
             saveDB(db);
 
-            // Перемикаємо екрани
             document.getElementById("start-screen").style.display = "none";
             document.getElementById("game-screen").style.display = "block";
             document.getElementById("game-avatar").textContent = playerAvatar;
@@ -165,6 +230,7 @@
         function startGame() {
             gameRunning = true;
             score = 0;
+            stars = [];
             updateHUD();
             const btn = document.getElementById("action-btn");
             btn.textContent = "Stop game";
@@ -291,7 +357,6 @@
                     score += star.value;
                     stars.splice(i, 1);
 
-                    // Перевірка рекорду
                     if (score > highScore) {
                         highScore = score;
                         const db = loadDB();
