@@ -4,358 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Clicker 🌌 Online</title>
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
-    <style>
-        /* -------------------
-           ЗАГАЛЬНІ СТИЛІ
-        ------------------- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* -------------------
-           ВІКНО 1: СТАРТОВИЙ ЕКРАН
-        ------------------- */
-        #start-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #ffc0cb;
-        }
-
-        #start-screen h1 {
-            font-size: 42px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            color: #333;
-        }
-
-        #start-screen label {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        #start-screen .hint {
-            font-size: 14px;
-            font-style: italic;
-            color: #555;
-            margin-bottom: 15px;
-        }
-
-        #nickname-input {
-            font-size: 20px;
-            padding: 10px 20px;
-            text-align: center;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            outline: none;
-            margin-bottom: 10px;
-        }
-
-        #nickname-input:focus {
-            border-color: #40E0D0;
-        }
-
-        #error-msg {
-            color: red;
-            font-weight: bold;
-            font-size: 14px;
-            min-height: 20px;
-            margin-bottom: 15px;
-        }
-
-        .avatar-section h2 {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        .avatar-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .avatar-btn {
-            font-size: 28px;
-            width: 55px;
-            height: 55px;
-            border: 3px solid transparent;
-            border-radius: 12px;
-            background-color: #ffc0cb;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .avatar-btn:hover {
-            transform: scale(1.15);
-        }
-
-        .avatar-btn.selected {
-            background-color: #40E0D0;
-            border-color: #00CED1;
-        }
-
-        .buttons-row {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn-confirm {
-            font-size: 22px;
-            font-weight: bold;
-            padding: 12px 40px;
-            background-color: #40E0D0;
-            color: #000;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .btn-confirm:hover {
-            background-color: #00CED1;
-        }
-
-        .btn-exit {
-            font-size: 22px;
-            font-weight: bold;
-            padding: 12px 40px;
-            background-color: #ff4d4d;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .btn-exit:hover {
-            background-color: #cc0000;
-        }
-
-        /* -------------------
-           ВІКНО 2: ІГРОВИЙ ЕКРАН
-        ------------------- */
-        #game-screen {
-            display: none;
-            position: relative;
-            height: 100vh;
-            width: 100vw;
-            background-color: #000;
-        }
-
-        #game-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            cursor: default;
-        }
-
-        /* Профіль гравця (зліва зверху) */
-        #player-info {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            display: flex;
-            align-items: center;
-            background-color: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 10px;
-            padding: 8px 15px;
-            gap: 10px;
-        }
-
-        #player-info .avatar {
-            font-size: 36px;
-        }
-
-        #player-info .name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #40E0D0;
-        }
-
-        /* HUD панель (по центру зверху) */
-        #hud {
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-        }
-
-        #hud .high-score {
-            font-size: 22px;
-            font-weight: bold;
-            color: #ffc0cb;
-        }
-
-        #hud .score {
-            font-size: 22px;
-            color: white;
-        }
-
-        #hud .game-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 8px;
-            justify-content: center;
-        }
-
-        .btn-game {
-            font-size: 16px;
-            font-weight: bold;
-            padding: 8px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-start {
-            background-color: #40E0D0;
-            color: #000;
-        }
-
-        .btn-stop {
-            background-color: #ff66cc;
-            color: white;
-        }
-
-        .btn-game-exit {
-            background-color: #ff4d4d;
-            color: white;
-        }
-
-        .btn-game:hover {
-            opacity: 0.85;
-            transform: scale(1.05);
-        }
-
-        /* Таблиця лідерів (справа) */
-        #leaderboard {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background-color: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 10px;
-            padding: 12px 18px;
-            min-width: 220px;
-        }
-
-        #leaderboard h3 {
-            color: #40E0D0;
-            font-size: 18px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .leaderboard-entry {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 0;
-            color: white;
-            font-size: 14px;
-            border-bottom: 1px solid #333;
-        }
-
-        .leaderboard-entry:last-child {
-            border-bottom: none;
-        }
-
-        .leaderboard-entry .rank {
-            color: #ffff99;
-            font-weight: bold;
-            width: 25px;
-        }
-
-        .leaderboard-entry .lb-avatar {
-            font-size: 18px;
-            width: 25px;
-        }
-
-        .leaderboard-entry .lb-name {
-            flex: 1;
-            margin-left: 8px;
-            color: #ccc;
-        }
-
-        .leaderboard-entry .lb-score {
-            color: #ffc0cb;
-            font-weight: bold;
-        }
-
-        /* Інструкція (знизу по центру) */
-        #instructions {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #ffff99;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        /* Повідомлення про рекорд */
-        #record-alarm {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: cyan;
-            font-size: 42px;
-            font-weight: bold;
-            text-align: center;
-            text-shadow: 0 0 20px cyan;
-            animation: pulse 0.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes pulse {
-            from { transform: translate(-50%, -50%) scale(1); }
-            to { transform: translate(-50%, -50%) scale(1.1); }
-        }
-
-        /* Онлайн статус */
-        #online-status {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
-            color: #40E0D0;
-            font-size: 14px;
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: #00ff00;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-    </style>
 </head>
 <body>
 
@@ -422,7 +72,7 @@
     </div>
 
     <!-- ==================== -->
-    <!-- JAVASCRIPT (Логіка гри) -->
+    <!-- JAVASCRIPT -->
     <!-- ==================== -->
     <script>
         // -------------------
@@ -443,7 +93,7 @@
         const avatars = ['👽', '🚀', '👨‍🚀', '👾', '🤖', '🛸', '☄️', '🌟', '🌙'];
 
         // -------------------
-        // Canvas налаштування
+        // Canvas
         // -------------------
         const canvas = document.getElementById("game-canvas");
         const ctx = canvas.getContext("2d");
@@ -455,7 +105,7 @@
         window.addEventListener("resize", resizeCanvas);
 
         // -------------------
-        // Генерація кнопок аватарів
+        // Аватари
         // -------------------
         const avatarContainer = document.getElementById("avatar-container");
         avatars.forEach((av, index) => {
@@ -488,10 +138,8 @@
             playerName = input;
             playerAvatar = selectedAvatar;
 
-            // Відправляємо дані на сервер
             socket.emit("player_join", { name: playerName, avatar: playerAvatar });
 
-            // Перемикаємо екрани
             document.getElementById("start-screen").style.display = "none";
             document.getElementById("game-screen").style.display = "block";
             document.getElementById("game-avatar").textContent = playerAvatar;
@@ -554,12 +202,11 @@
         }
 
         // -------------------
-        // Малювання зірок на Canvas
+        // Малювання
         // -------------------
         function renderLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Малюємо кожну зірку
             for (const star of stars) {
                 ctx.beginPath();
                 ctx.arc(star.x + star.size / 2, star.y + star.size / 2, star.size / 2, 0, Math.PI * 2);
@@ -572,7 +219,7 @@
         }
 
         // -------------------
-        // Обробка кліку по Canvas
+        // Клік по Canvas
         // -------------------
         canvas.addEventListener("click", (event) => {
             if (!gameRunning) return;
@@ -587,7 +234,6 @@
                 const distance = Math.sqrt((clickX - centerX) ** 2 + (clickY - centerY) ** 2);
 
                 if (distance <= star.size / 2) {
-                    // Відправляємо на сервер, що зірку зловлено
                     socket.emit("catch_star", {
                         star_id: star.id,
                         player_name: playerName
@@ -597,7 +243,7 @@
             }
         });
 
-        // Зміна курсору при наведенні на зірку
+        // Курсор
         canvas.addEventListener("mousemove", (event) => {
             if (!gameRunning) {
                 canvas.style.cursor = "default";
@@ -622,74 +268,62 @@
         });
 
         // -------------------
-        // WebSocket події (від сервера)
+        // WebSocket події
         // -------------------
-
-        // Отримуємо початковий стан гри
         socket.on("game_state", (data) => {
             stars = data.stars;
             updateLeaderboard(data.leaderboard);
         });
 
-        // Отримуємо дані гравця після входу
         socket.on("player_data", (data) => {
             highScore = data.high_score;
             updateHUD();
             updateLeaderboard(data.leaderboard);
         });
 
-        // Нова зірка з'явилась
         socket.on("new_star", (star) => {
             stars.push(star);
         });
 
-        // Оновлення позицій зірок
         socket.on("update_stars", (updatedStars) => {
             stars = updatedStars;
         });
 
-        // Зірку видалено (впала за межі)
         socket.on("remove_star", (data) => {
             stars = stars.filter(s => s.id !== data.id);
         });
 
-        // Зірку зловлено іншим гравцем
         socket.on("star_removed", (data) => {
             stars = stars.filter(s => s.id !== data.star_id);
         });
 
-        // Гравець успішно зловив зірку
         socket.on("star_caught_success", (data) => {
             stars = stars.filter(s => s.id !== data.star_id);
             score = data.score;
             highScore = data.high_score;
             updateHUD();
 
-            // Показуємо повідомлення про рекорд
             if (data.new_record) {
                 showRecordAlarm();
             }
         });
 
-        // Зірку вже зловив інший гравець
         socket.on("star_already_caught", (data) => {
             stars = stars.filter(s => s.id !== data.star_id);
         });
 
-        // Скидання рахунку
         socket.on("score_reset", (data) => {
             score = data.score;
             highScore = data.high_score;
             updateHUD();
         });
 
-        // Оновлення таблиці лідерів
         socket.on("leaderboard_update", (leaderboard) => {
             updateLeaderboard(leaderboard);
         });
 
         // -------------------
-        // Повідомлення про рекорд
+        // Рекорд
         // -------------------
         function showRecordAlarm() {
             const alarm = document.getElementById("record-alarm");
