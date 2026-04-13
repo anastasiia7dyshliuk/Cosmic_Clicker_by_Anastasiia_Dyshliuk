@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Clicker 🌌</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- СТАРТОВИЙ ЕКРАН -->
+    <div id="start-screen">
+        <h1>Welcome to Cosmic Clicker! 🌌</h1>
+
+        <label>Enter your nickname:</label>
+        <p class="hint">(English letters only, max 15 characters)</p>
+        <input type="text" id="nickname-input" maxlength="15" placeholder="Your name...">
+        <p id="error-msg"></p>
+
+        <div class="avatar-section">
+            <h2>Choose your avatar:</h2>
+            <div class="avatar-container" id="avatar-container"></div>
+        </div>
+
+        <div class="buttons-row">
+            <button class="btn-confirm" onclick="confirmNickname()">Confirm</button>
+        </div>
+    </div>
+
+    <!-- ІГРОВИЙ ЕКРАН -->
+    <div id="game-screen">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="player-info">
+            <span class="avatar" id="game-avatar">👽</span>
+            <span class="name" id="game-name">Player</span>
+        </div>
+
+        <div id="hud">
+            <div class="high-score" id="high-score-label">Your High Score: 0</div>
+            <div class="score" id="score-label">Score: 0</div>
+            <div class="game-buttons">
+                <button class="btn-game btn-start" id="action-btn" onclick="startGame()">Start</button>
+            </div>
+        </div>
+
+        <div id="leaderboard">
+            <h3>🏆 Leaderboard</h3>
+            <div id="leaderboard-list"></div>
+        </div>
+
+        <div id="instructions">⭐ Left-click on a star to catch it! ⭐</div>
+        <div id="record-alarm">🚨 NEW RECORD! 🚨</div>
+    </div>
+
+    <script>
+        // -------------------
+        // Змінні
+        // -------------------
+        let playerName = "";
+        let playerAvatar = "👽";
+        let selectedAvatar = "👽";
+        let score = 0;
+        let highScore = 0;
+        let gameRunning = false;
+        let stars = [];
+        let starIdCounter = 0;
+        const avatars = ['👽', '🚀', '👨‍🚀', '👾', '🤖', '🛸', '☄️', '🌟', '🌙'];
+
+        // -------------------
+        // Canvas
+        // -------------------
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+
+        // -------------------
+        // Локальна база даних (localStorage)
+        // -------------------
+        function loadDB() {
+            const data = localStorage.getItem("cosmic_clicker_db");
+            return data ? JSON.parse(data) : {};
+        }
+
+        function saveDB(db) {
+            localStorage.setItem("cosmic_clicker_db", JSON.stringify(db));
+        }
+
+        function getLeaderboard() {
+            const db = loadDB();
+            const players = Object.entries(db).map(([name, data]) => ({
+                name: name,
+                avatar: data.avatar || "👽",
+                high_score: data.high_score || 0
+            }));
+            players.sort((a, b) => b.high_score - a.high_score);
+            return players.slice(0, 10);
+        }
+
+        // -------------------
+        // Аватари
+        // -------------------
+        const avatarContainer = document.getElementById("avatar-container");
+        avatars.forEach((av, index) => {
+            const btn = document.createElement("button");
+            btn.className = "avatar-btn" + (index === 0 ? " selected" : "");
+            btn.textContent = av;
+            btn.onclick = () => selectAvatar(av, btn);
+            avatarContainer.appendChild(btn);
+        });
+
+        function selectAvatar(av, btn) {
+            selectedAvatar = av;
+            document.querySelectorAll(".avatar-btn").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+        }
+
+        // -------------------
+        // Підтвердження нікнейму
+        // -------------------
+        function confirmNickname() {
+            const input = document.getElementById("nickname-input").value.trim();
+            const errorMsg = document.getElementById("error-msg");
+
+            if (!input || input.length > 15 || !/^[A-Za-z0-9 ]+$/.test(input)) {
+                errorMsg.textContent = "Please reread the username entry conditions and try again.";
+                return;
+            }
+
+            errorMsg.textContent = "";
+            playerName = input;
+            playerAvatar = selectedAvatar;
+
+            // Завантажуємо або створюємо профіль
+            const db = loadDB();
+            if (db[playerName]) {
+                highScore = db[playerName].high_score || 0;
+                db[playerName].avatar = playerAvatar;
+            } else {
+                highScore = 0;
+                db[playerName] = { high_score: 0, avatar: playerAvatar };
+            }
+            saveDB(db);
+
+            // Перемикаємо екрани
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("game-screen").style.display = "block";
+            document.getElementById("game-avatar").textContent = playerAvatar;
+            document.getElementById("game-name").textContent = playerName;
+
+            updateHUD();
+            updateLeaderboard(getLeaderboard());
+            resizeCanvas();
+            renderLoop();
+        }
+
+        // -------------------
+        // Керування грою
+        // -------------------
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            updateHUD();
+            const btn = document.getElementById("action-btn");
+            btn.textContent = "Stop game";
+            btn.className = "btn-game btn-stop";
+            btn.onclick = stopGame;
+            spawnStar();
+        }
+
+        function stopGame() {
+            gameRunning = false;
+            const btn = document.getElementById("action-btn");
+            btn.textContent = "Start again";
+            btn.className = "btn-game btn-start";
+            btn.onclick = restartGame;
+        }
+
+        function restartGame() {
+            score = 0;
+            stars = [];
+            updateHUD();
+            startGame();
+        }
+
+        function updateHUD() {
+            document.getElementById("score-label").textContent = `Score: ${score}`;
+            document.getElementById("high-score-label").textContent = `Your High Score: ${highScore}`;
+        }
+
+        // -------------------
+        // Таблиця лідерів
+        // -------------------
+        function updateLeaderboard(leaderboard) {
+            const list = document.getElementById("leaderboard-list");
+            list.innerHTML = "";
+            leaderboard.forEach((player, index) => {
+                const entry = document.createElement("div");
+                entry.className = "leaderboard-entry";
+                entry.innerHTML = `
+                    <span class="rank">${index + 1}.</span>
+                    <span class="lb-avatar">${player.avatar}</span>
+                    <span class="lb-name">${player.name}</span>
+                    <span class="lb-score">${player.high_score}</span>
+                `;
+                list.appendChild(entry);
+            });
+        }
+
+        // -------------------
+        // Зірки
+        // -------------------
+        function spawnStar() {
+            if (!gameRunning) return;
+
+            starIdCounter++;
+            let size, value, color;
+
+            if (Math.random() < 0.15) {
+                size = Math.floor(Math.random() * 11) + 25;
+                value = 2;
+                color = "cyan";
+            } else {
+                size = Math.floor(Math.random() * 11) + 15;
+                value = 1;
+                color = "yellow";
+            }
+
+            stars.push({
+                id: starIdCounter,
+                x: Math.floor(Math.random() * (canvas.width - size - 20)) + 10,
+                y: -50,
+                size: size,
+                speed: Math.random() * 2 + 1,
+                value: value,
+                color: color
+            });
+
+            setTimeout(spawnStar, Math.random() * 500 + 300);
+        }
+
+        function moveStars() {
+            for (let i = stars.length - 1; i >= 0; i--) {
+                stars[i].y += stars[i].speed;
+                if (stars[i].y > canvas.height) {
+                    stars.splice(i, 1);
+                }
+            }
+        }
+
+        // -------------------
+        // Малювання
+        // -------------------
+        function renderLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            moveStars();
+
+            for (const star of stars) {
+                ctx.beginPath();
+                ctx.arc(star.x + star.size / 2, star.y + star.size / 2, star.size / 2, 0, Math.PI * 2);
+                ctx.fillStyle = star.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        // -------------------
+        // Клік
+        // -------------------
+        canvas.addEventListener("click", (event) => {
+            if (!gameRunning) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            for (let i = 0; i < stars.length; i++) {
+                const star = stars[i];
+                const centerX = star.x + star.size / 2;
+                const centerY = star.y + star.size / 2;
+                const distance = Math.sqrt((clickX - centerX) ** 2 + (clickY - centerY) ** 2);
+
+                if (distance <= star.size / 2) {
+                    score += star.value;
+                    stars.splice(i, 1);
+
+                    // Перевірка рекорду
+                    if (score > highScore) {
+                        highScore = score;
+                        const db = loadDB();
+                        if (db[playerName]) {
+                            db[playerName].high_score = highScore;
+                        }
+                        saveDB(db);
+                        showRecordAlarm();
+                        updateLeaderboard(getLeaderboard());
+                    }
+
+                    updateHUD();
+                    break;
+                }
+            }
+        });
+
+        // Курсор
+        canvas.addEventListener("mousemove", (event) => {
+            if (!gameRunning) { canvas.style.cursor = "default"; return; }
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            let onStar = false;
+            for (const star of stars) {
+                const cx = star.x + star.size / 2;
+                const cy = star.y + star.size / 2;
+                if (Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2) <= star.size / 2) {
+                    onStar = true;
+                    break;
+                }
+            }
+            canvas.style.cursor = onStar ? "crosshair" : "default";
+        });
+
+        // -------------------
+        // Рекорд
+        // -------------------
+        function showRecordAlarm() {
+            const alarm = document.getElementById("record-alarm");
+            alarm.textContent = `🚨 NEW RECORD, ${playerName}! 🚨`;
+            alarm.style.display = "block";
+            setTimeout(() => { alarm.style.display = "none"; }, 3000);
+        }
+    </script>
+</body>
+</html>
