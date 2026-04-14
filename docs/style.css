@@ -12,13 +12,113 @@ body {
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    background-color: #000;
+}
+
+/* ===========================
+   ГОЛОВНА СТОРІНКА (LANDING)
+   =========================== */
+#landing-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.landing-content {
+    text-align: center;
+    max-width: 700px;
+    padding: 40px;
+}
+
+.landing-content h1 {
+    font-size: 48px;
+    color: #40E0D0;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(64, 224, 208, 0.5);
+}
+
+.landing-description {
+    font-size: 18px;
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.landing-author {
+    font-size: 16px;
+    color: #ffc0cb;
+    margin-bottom: 30px;
+}
+
+.landing-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 35px;
+}
+
+.feature-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(64, 224, 208, 0.2);
+    border-radius: 12px;
+    padding: 20px 15px;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    background-color: rgba(64, 224, 208, 0.1);
+    border-color: #40E0D0;
+    transform: translateY(-3px);
+}
+
+.feature-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.feature-card p {
+    color: #aaa;
+    font-size: 14px;
+}
+
+.btn-play {
+    font-size: 24px;
+    font-weight: bold;
+    padding: 15px 50px;
+    background: linear-gradient(135deg, #40E0D0, #00CED1);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.btn-play:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(64, 224, 208, 0.5);
+}
+
+.landing-links a {
+    color: #ffc0cb;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.landing-links a:hover {
+    color: #40E0D0;
+    text-decoration: underline;
 }
 
 /* ===========================
    ВІКНО 1: СТАРТОВИЙ ЕКРАН
    =========================== */
 #start-screen {
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -107,7 +207,7 @@ body {
 }
 
 /* ===========================
-   КНОПКИ СТАРТОВОГО ЕКРАНУ
+   КНОПКИ
    =========================== */
 .buttons-row {
     display: flex;
@@ -130,11 +230,11 @@ body {
     background-color: #00CED1;
 }
 
-.btn-exit {
+.btn-back {
     font-size: 22px;
     font-weight: bold;
     padding: 12px 40px;
-    background-color: #ff4d4d;
+    background-color: #888;
     color: white;
     border: none;
     border-radius: 10px;
@@ -142,8 +242,8 @@ body {
     transition: background-color 0.3s;
 }
 
-.btn-exit:hover {
-    background-color: #cc0000;
+.btn-back:hover {
+    background-color: #666;
 }
 
 /* ===========================
@@ -339,30 +439,4 @@ body {
 @keyframes pulse {
     from { transform: translate(-50%, -50%) scale(1); }
     to { transform: translate(-50%, -50%) scale(1.1); }
-}
-
-/* ===========================
-   ОНЛАЙН СТАТУС
-   =========================== */
-#online-status {
-    position: absolute;
-    bottom: 15px;
-    left: 15px;
-    color: #40E0D0;
-    font-size: 14px;
-}
-
-.status-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    background-color: #00ff00;
-    border-radius: 50%;
-    margin-right: 5px;
-    animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
 }
